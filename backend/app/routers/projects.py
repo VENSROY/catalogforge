@@ -11,8 +11,6 @@ class ProjectCreate(BaseModel):
 
 @router.post("/")
 async def create_project(project: ProjectCreate):
-    # Get current user from auth
-    # For MVP, we'll use a simple approach
     result = supabase.table("projects").insert({
         "name": project.name,
         "market_id": project.market_id,
@@ -32,3 +30,8 @@ async def get_project(project_id: str):
     if not result.data:
         raise HTTPException(status_code=404, detail="Project not found")
     return result.data
+
+@router.get("/{project_id}/images")
+async def get_project_images(project_id: str):
+    result = supabase.table("images").select("*").eq("project_id", project_id).order("created_at", desc=True).execute()
+    return result.data or []

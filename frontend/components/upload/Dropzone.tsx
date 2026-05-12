@@ -11,10 +11,15 @@ type PreviewFile = {
   id: string
 }
 
-export default function Dropzone({ projectId }: { projectId: string }) {
+export default function Dropzone({
+  projectId,
+  onUploadComplete
+}: {
+  projectId: string
+  onUploadComplete?: () => void
+}) {
   const [files, setFiles] = useState<PreviewFile[]>([])
   const [uploading, setUploading] = useState(false)
-  const [uploadProgress, setUploadProgress] = useState(0)
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const newFiles = acceptedFiles.map(file => ({
@@ -40,7 +45,6 @@ export default function Dropzone({ projectId }: { projectId: string }) {
   const handleUpload = async () => {
     if (files.length === 0) return
     setUploading(true)
-    setUploadProgress(0)
 
     const formData = new FormData()
     files.forEach(f => formData.append('files', f.file))
@@ -48,7 +52,7 @@ export default function Dropzone({ projectId }: { projectId: string }) {
 
     try {
       const token = localStorage.getItem('sb-access-token') || ''
-      
+
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/v1/upload`,
         {
@@ -60,15 +64,19 @@ export default function Dropzone({ projectId }: { projectId: string }) {
         }
       )
 
-      if (!response.ok) throw new Error('Upload failed')
-      
-      alert(`${files.length} images uploaded successfully!`)
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.detail || 'Upload failed')
+      }
+
+      const data = await response.json()
+      alert(`${data.message}`)
       setFiles([])
+      onUploadComplete?.()
     } catch (error: any) {
       alert('Upload failed: ' + error.message)
     } finally {
       setUploading(false)
-      setUploadProgress(0)
     }
   }
 
@@ -100,7 +108,7 @@ export default function Dropzone({ projectId }: { projectId: string }) {
               Clear All
             </Button>
           </div>
-          
+
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {files.map((file) => (
               <div key={file.id} className="relative group">
@@ -122,8 +130,8 @@ export default function Dropzone({ projectId }: { projectId: string }) {
             ))}
           </div>
 
-          <Button 
-            onClick={handleUpload} 
+          <Button
+            onClick={handleUpload}
             disabled={uploading}
             className="w-full"
           >

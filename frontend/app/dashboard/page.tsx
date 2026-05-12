@@ -26,8 +26,7 @@ export default function DashboardPage() {
       router.push('/')
       return
     }
-    
-    // Fetch projects from API
+
     const fetchProjects = async () => {
       try {
         const token = localStorage.getItem('sb-access-token') || ''
@@ -39,7 +38,7 @@ export default function DashboardPage() {
             }
           }
         )
-        
+
         if (response.ok) {
           const data = await response.json()
           setProjects(data)
@@ -102,8 +101,8 @@ export default function DashboardPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {projects.map((project) => (
-              <Card 
-                key={project.id} 
+              <Card
+                key={project.id}
                 className="cursor-pointer hover:shadow-lg transition"
                 onClick={() => router.push(`/dashboard/projects/${project.id}`)}
               >
@@ -113,11 +112,10 @@ export default function DashboardPage() {
                 <CardContent>
                   <div className="flex items-center justify-between">
                     <p className="text-sm text-gray-600">{project.image_count || 0} images</p>
-                    <span className={`text-xs px-2 py-1 rounded-full ${
-                      project.status === 'ready' 
-                        ? 'bg-green-100 text-green-700' 
+                    <span className={`text-xs px-2 py-1 rounded-full ${project.status === 'ready'
+                        ? 'bg-green-100 text-green-700'
                         : 'bg-yellow-100 text-yellow-700'
-                    }`}>
+                      }`}>
                       {project.status}
                     </span>
                   </div>
