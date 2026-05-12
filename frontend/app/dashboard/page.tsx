@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { Plus, Folder, LogOut } from 'lucide-react'
+import { Plus, Folder, LogOut, Loader2 } from 'lucide-react'
 
 type Project = {
   id: string
@@ -23,11 +23,35 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!user) {
-      router.push('/login')
+      router.push('/')
       return
     }
-    // TODO: Fetch projects from API
-    setLoading(false)
+    
+    // Fetch projects from API
+    const fetchProjects = async () => {
+      try {
+        const token = localStorage.getItem('sb-access-token') || ''
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/v1/projects`,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          }
+        )
+        
+        if (response.ok) {
+          const data = await response.json()
+          setProjects(data)
+        }
+      } catch (error) {
+        console.error('Failed to fetch projects:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchProjects()
   }, [user, router])
 
   if (!user) return null
@@ -60,7 +84,9 @@ export default function DashboardPage() {
         </div>
 
         {loading ? (
-          <p>Loading...</p>
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+          </div>
         ) : projects.length === 0 ? (
           <Card className="text-center py-12">
             <CardContent>
@@ -76,13 +102,28 @@ export default function DashboardPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {projects.map((project) => (
-              <Card key={project.id} className="cursor-pointer hover:shadow-lg transition">
+              <Card 
+                key={project.id} 
+                className="cursor-pointer hover:shadow-lg transition"
+                onClick={() => router.push(`/dashboard/projects/${project.id}`)}
+              >
                 <CardHeader>
-                  <CardTitle>{project.name}</CardTitle>
+                  <CardTitle className="text-lg">{project.name}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-gray-600">{project.image_count} images</p>
-                  <p className="text-xs text-gray-400 mt-1">{project.status}</p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-gray-600">{project.image_count || 0} images</p>
+                    <span className={`text-xs px-2 py-1 rounded-full ${
+                      project.status === 'ready' 
+                        ? 'bg-green-100 text-green-700' 
+                        : 'bg-yellow-100 text-yellow-700'
+                    }`}>
+                      {project.status}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-2">
+                    {new Date(project.created_at).toLocaleDateString()}
+                  </p>
                 </CardContent>
               </Card>
             ))}

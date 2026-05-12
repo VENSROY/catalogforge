@@ -19,21 +19,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // Check existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
+      if (session?.access_token) {
+        localStorage.setItem('sb-access-token', session.access_token)
+      }
       setLoading(false)
     })
 
+    // Listen to auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
+      if (session?.access_token) {
+        localStorage.setItem('sb-access-token', session.access_token)
+      } else {
+        localStorage.removeItem('sb-access-token')
+      }
     })
 
     return () => subscription.unsubscribe()
   }, [])
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) throw error
+    // Save token
+    if (data.session?.access_token) {
+      localStorage.setItem('sb-access-token', data.session.access_token)
+    }
   }
 
   const signUp = async (email: string, password: string) => {
@@ -43,6 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     await supabase.auth.signOut()
+    localStorage.removeItem('sb-access-token')
   }
 
   return (

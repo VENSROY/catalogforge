@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { Upload, X, Image as ImageIcon } from 'lucide-react'
+import { Upload, X, Image as ImageIcon, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 type PreviewFile = {
@@ -14,6 +14,7 @@ type PreviewFile = {
 export default function Dropzone({ projectId }: { projectId: string }) {
   const [files, setFiles] = useState<PreviewFile[]>([])
   const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const newFiles = acceptedFiles.map(file => ({
@@ -39,21 +40,35 @@ export default function Dropzone({ projectId }: { projectId: string }) {
   const handleUpload = async () => {
     if (files.length === 0) return
     setUploading(true)
-    
+    setUploadProgress(0)
+
     const formData = new FormData()
     files.forEach(f => formData.append('files', f.file))
     formData.append('project_id', projectId)
 
     try {
-      // TODO: Replace with actual API call
-      console.log('Uploading', files.length, 'files')
-      await new Promise(resolve => setTimeout(resolve, 2000)) // Mock delay
-      alert('Upload complete!')
+      const token = localStorage.getItem('sb-access-token') || ''
+      
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/upload`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formData
+        }
+      )
+
+      if (!response.ok) throw new Error('Upload failed')
+      
+      alert(`${files.length} images uploaded successfully!`)
       setFiles([])
-    } catch (error) {
-      alert('Upload failed')
+    } catch (error: any) {
+      alert('Upload failed: ' + error.message)
     } finally {
       setUploading(false)
+      setUploadProgress(0)
     }
   }
 
@@ -94,7 +109,6 @@ export default function Dropzone({ projectId }: { projectId: string }) {
                     src={file.preview}
                     alt={file.file.name}
                     className="w-full h-full object-cover"
-                    onLoad={() => URL.revokeObjectURL(file.preview)}
                   />
                 </div>
                 <button
@@ -113,8 +127,17 @@ export default function Dropzone({ projectId }: { projectId: string }) {
             disabled={uploading}
             className="w-full"
           >
-            <ImageIcon className="w-4 h-4 mr-2" />
-            {uploading ? 'Uploading...' : `Upload ${files.length} Images`}
+            {uploading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Uploading...
+              </>
+            ) : (
+              <>
+                <ImageIcon className="w-4 h-4 mr-2" />
+                Upload {files.length} Images
+              </>
+            )}
           </Button>
         </div>
       )}
