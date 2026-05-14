@@ -19,7 +19,7 @@ class CatalogPDF(FPDF):
             except:
                 pass
         self.set_font("Arial", "B", 16)
-        self.cell(0, 10, self.company_name or "Catalog", ln=True, align="C")
+        self.cell(0, 10, self.company_name or "Product Catalog", ln=True, align="C")
         self.ln(5)
         
     def footer(self):
@@ -45,6 +45,10 @@ def convert_to_rgb(img: Image.Image) -> Image.Image:
         return img.convert('RGB')
     return img
 
+def resize_for_pdf(img: Image.Image, max_width: int, max_height: int) -> Image.Image:
+    img.thumbnail((max_width, max_height), Image.Resampling.LANCZOS)
+    return img
+
 def generate_catalog_pdf(
     images: List[dict],
     output_path: str,
@@ -63,13 +67,13 @@ def generate_catalog_pdf(
             img_bytes = download_image(img_data['original_url'])
             img = Image.open(io.BytesIO(img_bytes))
             img = convert_to_rgb(img)
+            img = resize_for_pdf(img, 90, 120)
             
             x = 10 if i % 2 == 0 else 105
             y = 30
             
-            img.thumbnail((90, 120))
             img_path = f"/tmp/img_{uuid.uuid4()}.jpg"
-            img.save(img_path, 'JPEG')
+            img.save(img_path, 'JPEG', quality=95)
             
             pdf.image(img_path, x=x, y=y, w=90)
             os.remove(img_path)
@@ -82,13 +86,13 @@ def generate_catalog_pdf(
             img_bytes = download_image(img_data['original_url'])
             img = Image.open(io.BytesIO(img_bytes))
             img = convert_to_rgb(img)
+            img = resize_for_pdf(img, 90, 110)
             
             positions = [(10, 30), (105, 30), (10, 150), (105, 150)]
             pos = positions[i % 4]
             
-            img.thumbnail((90, 110))
             img_path = f"/tmp/img_{uuid.uuid4()}.jpg"
-            img.save(img_path, 'JPEG')
+            img.save(img_path, 'JPEG', quality=95)
             
             pdf.image(img_path, x=pos[0], y=pos[1], w=90)
             os.remove(img_path)
@@ -100,10 +104,10 @@ def generate_catalog_pdf(
             img_bytes = download_image(img_data['original_url'])
             img = Image.open(io.BytesIO(img_bytes))
             img = convert_to_rgb(img)
+            img = resize_for_pdf(img, 190, 250)
             
-            img.thumbnail((190, 250))
             img_path = f"/tmp/img_{uuid.uuid4()}.jpg"
-            img.save(img_path, 'JPEG')
+            img.save(img_path, 'JPEG', quality=95)
             
             pdf.image(img_path, x=10, y=30, w=190)
             os.remove(img_path)

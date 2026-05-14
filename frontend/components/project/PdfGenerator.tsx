@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { Download, Loader2, FileText, Eye } from 'lucide-react'
+import { Download, Loader2, FileText, Eye, Trash2 } from 'lucide-react'
 
 type PdfItem = {
   id: string
@@ -63,12 +63,40 @@ export default function PdfGenerator({
 
       const data = await response.json()
       alert('PDF generated successfully!')
-      fetchPdfs() // Refresh PDF list
+      fetchPdfs()
       onPdfGenerated?.()
     } catch (error: any) {
       alert('Failed: ' + error.message)
     } finally {
       setGenerating(false)
+    }
+  }
+
+  const handleDeletePdf = async (pdfId: string) => {
+    if (!confirm('Delete this PDF?')) return
+    
+    try {
+      const token = localStorage.getItem('sb-access-token') || ''
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/pdf/${pdfId}`,
+        {
+          method: 'DELETE',
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      )
+      
+      if (response.ok) {
+        fetchPdfs()
+      } else {
+        const error = await response.json()
+        alert('Delete failed: ' + error.detail)
+      }
+    } catch (error: any) {
+      console.error('Failed to delete PDF:', error)
+      alert('Delete failed: ' + error.message)
     }
   }
 
@@ -106,7 +134,6 @@ export default function PdfGenerator({
         </Button>
       </div>
 
-      {/* Generated PDFs List */}
       {pdfs.length > 0 && (
         <div className="space-y-2">
           <h4 className="text-sm font-medium text-gray-700">Generated Catalogs</h4>
@@ -133,6 +160,14 @@ export default function PdfGenerator({
                     <Download className="w-4 h-4 mr-1" />
                     Download
                   </a>
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => handleDeletePdf(pdf.id)}
+                  className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                >
+                  <Trash2 className="w-4 h-4" />
                 </Button>
               </div>
             </div>
