@@ -4,6 +4,7 @@ from app.routers.upload import router as upload_router
 from app.routers.projects import router as projects_router
 from app.routers.categories import router as categories_router
 from app.routers.pdf import router as pdf_router
+from app.routers.ai import router as ai_router  # NEW
 
 app = FastAPI(title="CatalogForge API", version="1.0")
 
@@ -19,6 +20,7 @@ app.include_router(upload_router, prefix="/api/v1/upload", tags=["upload"])
 app.include_router(projects_router, prefix="/api/v1/projects", tags=["projects"])
 app.include_router(categories_router, prefix="/api/v1/categories", tags=["categories"])
 app.include_router(pdf_router, prefix="/api/v1/pdf", tags=["pdf"])
+app.include_router(ai_router, prefix="/api/v1/ai", tags=["ai"])  # NEW
 
 @app.get("/health")
 def health_check():

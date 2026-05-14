@@ -7,6 +7,7 @@ import { ArrowLeft, Loader2, Image as ImageIcon } from 'lucide-react'
 import Dropzone from '@/components/upload/Dropzone'
 import CategorySidebar from '@/components/project/CategorySidebar'
 import PdfGenerator from '@/components/project/PdfGenerator'
+import AiActions from '@/components/project/AiActions'
 
 type Project = {
   id: string
@@ -125,6 +126,8 @@ export default function ProjectPage() {
         onCategoryAdded={fetchData}
         onCategoryDeleted={fetchData}
       />
+
+      <AiActions projectId={projectId} onComplete={fetchData} />
 
       <div className="flex-1">
         <header className="bg-white border-b px-6 py-4">
