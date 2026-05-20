@@ -1,5 +1,4 @@
 from fpdf import FPDF
-from PIL import Image
 import io
 import requests
 from typing import List
@@ -31,7 +30,9 @@ def download_image(url: str) -> bytes:
     response = requests.get(url)
     return response.content
 
-def convert_to_rgb(img: Image.Image) -> Image.Image:
+def convert_to_rgb(img):
+    """Lazy import PIL - only when PDF generation is called"""
+    from PIL import Image
     if img.mode in ('RGBA', 'LA'):
         background = Image.new('RGB', img.size, (255, 255, 255))
         background.paste(img, mask=img.split()[-1])
@@ -45,7 +46,8 @@ def convert_to_rgb(img: Image.Image) -> Image.Image:
         return img.convert('RGB')
     return img
 
-def resize_for_pdf(img: Image.Image, max_width: int, max_height: int) -> Image.Image:
+def resize_for_pdf(img, max_width: int, max_height: int):
+    from PIL import Image
     img.thumbnail((max_width, max_height), Image.Resampling.LANCZOS)
     return img
 
@@ -56,6 +58,8 @@ def generate_catalog_pdf(
     company_name: str = "",
     logo_url: str = None
 ):
+    from PIL import Image  # Lazy import - only when PDF generation called
+    
     pdf = CatalogPDF(company_name=company_name, logo_url=logo_url)
     pdf.set_auto_page_break(auto=True, margin=15)
     
